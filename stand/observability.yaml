@@ -1,0 +1,53 @@
+version: 1
+prometheus:
+  url: http://prometheus:9090
+  job_label: job
+  scrape_interval: 5s
+  evaluation_interval: 5s
+telemetry:
+  host_metrics: true
+  container_metrics: true
+  postgres_metrics: true
+  prometheus_self_metrics: true
+alerts:
+  enabled: true
+  target_down_for: 2m
+  db_not_ready_for: 2m
+  http_error_rate_threshold: 0.05
+  http_latency_p95_threshold_seconds: 0.75
+  host_high_cpu_threshold_percent: 90.0
+  host_high_cpu_for: 5m
+services:
+  gateway-api:
+    modules:
+    - http_server
+    - http_client
+    - container_metrics
+    metrics_port: 8001
+  grafana:
+    modules:
+    - container_metrics
+    metrics_port: 3000
+  orders-api:
+    modules:
+    - http_server
+    - postgres_client
+    - business_orders
+    - container_metrics
+    metrics_port: 8000
+  postgres:
+    modules:
+    - postgres_exporter
+    - container_metrics
+    exporter_service: postgres-exporter
+    exporter_port: 9187
+    dashboard:
+      add_metrics:
+        - section: "Прикладные метрикиs"
+          metric: "pg_stat_database_xact_commit"
+          title: "commits/s by database"
+          view: "rate"
+          aggregate: "sum"
+          group_by:
+            - datname
+          panel_type: "timeseries"

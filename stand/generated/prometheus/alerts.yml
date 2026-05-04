@@ -1,0 +1,113 @@
+groups:
+- name: yap_gateway-api
+  rules:
+  - alert: gateway_api_TargetDown
+    expr: max(up{job="gateway-api"}) == 0
+    for: 2m
+    labels:
+      severity: critical
+      service: gateway-api
+    annotations:
+      summary: gateway-api is down
+      description: Prometheus target for gateway-api is unavailable.
+  - alert: gateway_api_HighHttpErrorRate
+    expr: (sum(rate(http_requests_total{job="gateway-api",status=~"5.."}[5m])) / clamp_min(sum(rate(http_requests_total{job="gateway-api"}[5m])),
+      0.001)) > 0.05
+    for: 5m
+    labels:
+      severity: warning
+      service: gateway-api
+    annotations:
+      summary: gateway-api high HTTP 5xx rate
+      description: Error rate exceeded configured threshold.
+  - alert: gateway_api_HighHttpLatencyP95
+    expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="gateway-api"}[5m]))
+      by (le)) > 0.75
+    for: 5m
+    labels:
+      severity: warning
+      service: gateway-api
+    annotations:
+      summary: gateway-api high HTTP latency p95
+      description: HTTP p95 latency exceeded configured threshold.
+  - alert: gateway_api_DownstreamUnavailable
+    expr: min(downstream_up{job="gateway-api"}) == 0
+    for: 2m
+    labels:
+      severity: warning
+      service: gateway-api
+    annotations:
+      summary: gateway-api downstream unavailable
+      description: At least one downstream dependency is unavailable.
+- name: yap_orders-api
+  rules:
+  - alert: orders_api_TargetDown
+    expr: max(up{job="orders-api"}) == 0
+    for: 2m
+    labels:
+      severity: critical
+      service: orders-api
+    annotations:
+      summary: orders-api is down
+      description: Prometheus target for orders-api is unavailable.
+  - alert: orders_api_HighHttpErrorRate
+    expr: (sum(rate(http_requests_total{job="orders-api",status=~"5.."}[5m])) / clamp_min(sum(rate(http_requests_total{job="orders-api"}[5m])),
+      0.001)) > 0.05
+    for: 5m
+    labels:
+      severity: warning
+      service: orders-api
+    annotations:
+      summary: orders-api high HTTP 5xx rate
+      description: Error rate exceeded configured threshold.
+  - alert: orders_api_HighHttpLatencyP95
+    expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="orders-api"}[5m]))
+      by (le)) > 0.75
+    for: 5m
+    labels:
+      severity: warning
+      service: orders-api
+    annotations:
+      summary: orders-api high HTTP latency p95
+      description: HTTP p95 latency exceeded configured threshold.
+  - alert: orders_api_DbNotReady
+    expr: max(db_ready{job="orders-api"}) == 0
+    for: 2m
+    labels:
+      severity: critical
+      service: orders-api
+    annotations:
+      summary: orders-api database is not ready
+      description: Application-level DB readiness is zero.
+- name: yap_postgres
+  rules:
+  - alert: postgres_TargetDown
+    expr: max(up{job="postgres"}) == 0
+    for: 2m
+    labels:
+      severity: critical
+      service: postgres
+    annotations:
+      summary: postgres exporter is down
+      description: Prometheus target for exporter job postgres is unavailable.
+- name: yap_host
+  rules:
+  - alert: HostTargetDown
+    expr: max(up{job="node"}) == 0
+    for: 2m
+    labels:
+      severity: critical
+      service: host
+    annotations:
+      summary: node-exporter is down
+      description: Host metrics target is unavailable.
+  - alert: HostHighCpu
+    expr: 100 * (1 - avg(rate(node_cpu_seconds_total{job="node",mode="idle"}[5m])))
+      > 90.0
+    for: 5m
+    labels:
+      severity: warning
+      service: host
+    annotations:
+      summary: Host CPU usage is high
+      description: Host CPU busy percentage exceeded configured threshold.

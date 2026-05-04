@@ -1,0 +1,1 @@
+Service 'traffic-gen' exists in docker-compose.yml but has no observability config; skipped.
